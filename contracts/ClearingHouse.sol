@@ -12,6 +12,7 @@ contract ClearingHouse is Ownable {
     mapping(address => bool) private _supportedTokens;
     mapping(address => uint256) private _nonces;
 
+    // TESTED
     constructor(address owner) {
         transferOwnership(owner);
     }
@@ -62,14 +63,17 @@ contract ClearingHouse is Ownable {
     }
 
     // Admin functions for adding and removing tokens from the wrapped token system
+    // TESTED
     function addToken(address token) public onlyOwner {
         _supportedTokens[token] = true;
     }
 
+    //TESTED
     function removeToken(address token) public onlyOwner {
         _supportedTokens[token] = false;
     }
 
+    //TEST
     function isSupportedToken(address token) public view returns (bool) {
         return _supportedTokens[token];
     }
