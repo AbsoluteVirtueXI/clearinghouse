@@ -1,7 +1,7 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable no-unused-expressions */
 const { contract, accounts } = require('@openzeppelin/test-environment');
-const { BN, expectRevert, ether } = require('@openzeppelin/test-helpers');
+const { BN, expectRevert, expectEvent, ether } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
 const { expect } = require('chai');
 
@@ -100,6 +100,15 @@ describe('ClearingHouse', function () {
         this.clearingHouse.removeToken(this.token1.address, { from: dev }),
         'Ownable: caller is not the owner'
       );
+    });
+    it('emits event when supported tokens added', async function () {
+      const receipt = await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      expectEvent(receipt, 'TokenAdded', { token: this.token1.address });
+    });
+    it('emits event when supported tokens removed', async function () {
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      const receipt = await this.clearingHouse.removeToken(this.token1.address, { from: owner });
+      expectEvent(receipt, 'TokenRemoved', { token: this.token1.address });
     });
   });
 });
