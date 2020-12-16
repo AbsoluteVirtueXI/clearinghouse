@@ -25,6 +25,7 @@
     "solhint": "^3.3.2"
   },
   "dependencies": {
+    "@openzeppelin/contract-loader": "^0.6.2",
     "@openzeppelin/contracts": "^3.3.0",
     "dotenv": "^8.2.0"
   }
