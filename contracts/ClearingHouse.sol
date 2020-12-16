@@ -17,9 +17,6 @@ contract ClearingHouse is Ownable {
         transferOwnership(owner);
     }
 
-    // Double mapping as token address -> owner -> balance
-    event TokensWrapped(address indexed token, string indexed receiver, uint256 indexed amount);
-
     modifier onlySupportedToken(address token) {
         require(_supportedTokens[token], "ClearingHouse: Unsupported token");
         _;
@@ -66,15 +63,22 @@ contract ClearingHouse is Ownable {
     // TESTED
     function addToken(address token) public onlyOwner {
         _supportedTokens[token] = true;
+        emit TokenAdded(token);
     }
 
     //TESTED
     function removeToken(address token) public onlyOwner {
         _supportedTokens[token] = false;
+        emit TokenRemoved(token);
     }
 
     //TEST
     function isSupportedToken(address token) public view returns (bool) {
         return _supportedTokens[token];
     }
+
+    // Double mapping as token address -> owner -> balance
+    event TokensWrapped(address indexed token, string indexed receiver, uint256 indexed amount);
+    event TokenAdded(address indexed token);
+    event TokenRemoved(address indexed token);
 }
