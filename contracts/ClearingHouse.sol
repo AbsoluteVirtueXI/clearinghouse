@@ -27,14 +27,14 @@ contract ClearingHouse is Ownable {
         _;
     }
 
+    // TESTED
     function deposit(
         address token,
-        uint256 amount,
-        string memory receiver
+        string memory receiver,
+        uint256 amount
     ) public onlySupportedToken(token) {
         IERC20 tokenERC = IERC20(token);
         tokenERC.transferFrom(msg.sender, address(this), amount);
-
         emit TokensWrapped(token, receiver, amount);
     }
 
@@ -48,14 +48,9 @@ contract ClearingHouse is Ownable {
     ) public onlyValidNonce(nonce) {
         _nonces[msg.sender] = nonce;
         bytes32 digest = keccak256(abi.encodePacked(token, amount, nonce, msg.sender));
-
         address recoveredAddress = ecrecover(digest, v, r, s);
-
         require(recoveredAddress != address(0) && recoveredAddress == owner(), "ClearingHouse: Invalid Signature!");
-
         IERC20 tokenERC = IERC20(token);
-
-        //use low level call here, send can be a smart contract ???
         tokenERC.transfer(msg.sender, amount);
     }
 
@@ -78,7 +73,7 @@ contract ClearingHouse is Ownable {
     }
 
     // Double mapping as token address -> owner -> balance
-    event TokensWrapped(address indexed token, string indexed receiver, uint256 indexed amount);
+    event TokensWrapped(address indexed token, string receiver, uint256 amount);
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
 }

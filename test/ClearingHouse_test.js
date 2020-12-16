@@ -16,6 +16,8 @@ describe('ClearingHouse', function () {
   const TOKEN2_NAME = 'Token2';
   const TOKEN2_SYMBOL = 'TK2';
   const MINTER_ROLE = web3.utils.soliditySha3('MINTER_ROLE');
+  const RECEIVER = 'f1a6dabf27e29f6164812e5a2e4c6b34b61a7d6a372a2ad0e19495088f139b09';
+
   context('Testing context', function () {
     beforeEach(async function () {
       this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
@@ -109,6 +111,48 @@ describe('ClearingHouse', function () {
       await this.clearingHouse.addToken(this.token1.address, { from: owner });
       const receipt = await this.clearingHouse.removeToken(this.token1.address, { from: owner });
       expectEvent(receipt, 'TokenRemoved', { token: this.token1.address });
+    });
+  });
+  context('ClearingHouse: deposit tokens', function () {
+    beforeEach(async function () {
+      this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
+      this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
+      this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
+      // Gives 100 TK1 and 100 TK2 to users
+      await this.token1.mint(user1, ether('100'), { from: token1Owner });
+      await this.token1.mint(user2, ether('100'), { from: token1Owner });
+      await this.token1.mint(user3, ether('100'), { from: token1Owner });
+      await this.token2.mint(user1, ether('100'), { from: token2Owner });
+      await this.token2.mint(user2, ether('100'), { from: token2Owner });
+      await this.token2.mint(user3, ether('100'), { from: token2Owner });
+      // users have to approve ClearingHouse contract
+      await this.token1.approve(this.clearingHouse.address, ether('100'), { from: user1 });
+      await this.token1.approve(this.clearingHouse.address, ether('100'), { from: user2 });
+      await this.token1.approve(this.clearingHouse.address, ether('100'), { from: user3 });
+      await this.token2.approve(this.clearingHouse.address, ether('100'), { from: user1 });
+      await this.token2.approve(this.clearingHouse.address, ether('100'), { from: user2 });
+      await this.token2.approve(this.clearingHouse.address, ether('100'), { from: user3 });
+    });
+    it('deposits tokens', async function () {
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      await this.clearingHouse.addToken(this.token2.address, { from: owner });
+      await this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('50'), { from: user1 });
+      await this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('40'), { from: user2 });
+      expect(await this.token1.balanceOf(this.clearingHouse.address)).to.be.a.bignumber.equal(ether('90'));
+    });
+    it('reverts if tokens are not supported when deposit', async function () {
+      await expectRevert(
+        this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('50'), { from: user1 }),
+        'ClearingHouse: Unsupported token'
+      );
+    });
+    it('emits event when tokens are deposited', async function () {
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      await this.clearingHouse.addToken(this.token2.address, { from: owner });
+      const receipt1 = await this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('50'), { from: user1 });
+      expectEvent(receipt1, 'TokensWrapped', { token: this.token1.address, receiver: RECEIVER, amount: ether('50') });
+      const receipt2 = await this.clearingHouse.deposit(this.token2.address, RECEIVER, ether('50'), { from: user2 });
+      expectEvent(receipt2, 'TokensWrapped', { token: this.token2.address, receiver: RECEIVER, amount: ether('50') });
     });
   });
 });
