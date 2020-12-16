@@ -1,3 +1,4 @@
+/* eslint-disable comma-dangle */
 /* eslint-disable no-unused-expressions */
 const { contract, accounts } = require('@openzeppelin/test-environment');
 const { BN, expectRevert, ether } = require('@openzeppelin/test-helpers');
@@ -48,10 +49,34 @@ describe('ClearingHouse', function () {
       expect(await this.token2.balanceOf(user2)).to.be.a.bignumber.equal(ether('100'));
     });
   });
-  context('ClearingHouse deployment', function () {
+  context('ClearingHouse: deployment', function () {
     it('transfers ownership to owner', async function () {
       expect(await this.clearingHouse.owner()).to.equal(owner);
     });
   });
-  context('ClearingHouse deployed', function () {});
+  context('ClearingHouse: add/remove tokens ', function () {
+    it('adds new supported tokens', async function () {
+      expect(
+        await this.clearingHouse.isSupportedToken(this.token1.address),
+        `Token1: ${this.token1.address} should not be supported`
+      ).to.be.false;
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      expect(
+        await this.clearingHouse.isSupportedToken(this.token1.address),
+        `Token1: ${this.token1.address} should be supported`
+      ).to.be.true;
+    });
+
+    it('remove supported tokens', async function () {});
+    it('reverts if addToken is not called by owner', async function () {
+      await expectRevert(this.token1.addToken(this.token1.address, { from: dev }), 'Ownable: caller is not the owner');
+    });
+    it('reverts if removeToken is not called by owner', async function () {
+      await this.token1.addToken(this.token1.address, { from: owner });
+      await expectRevert(
+        this.token1.removeToken(this.token1.address, { from: dev }),
+        'Ownable: caller is not the owner'
+      );
+    });
+  });
 });

@@ -69,6 +69,10 @@ contract ClearingHouse is Ownable {
     function removeToken(address token) public onlyOwner {
         _supportedTokens[token] = false;
     }
+
+    function isSupportedToken(address token) public view returns (bool) {
+        return _supportedTokens[token];
+    }
 }
 
 // No need of this shit
