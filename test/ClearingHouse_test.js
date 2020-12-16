@@ -16,12 +16,12 @@ describe('ClearingHouse', function () {
   const TOKEN2_NAME = 'Token2';
   const TOKEN2_SYMBOL = 'TK2';
   const MINTER_ROLE = web3.utils.soliditySha3('MINTER_ROLE');
-  beforeEach(async function () {
-    this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
-    this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
-    this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
-  });
   context('Testing context', function () {
+    beforeEach(async function () {
+      this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
+      this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
+      this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
+    });
     it(`the test token1 has name ${TOKEN1_NAME}`, async function () {
       expect(await this.token1.name()).to.equal(TOKEN1_NAME);
     });
@@ -50,15 +50,25 @@ describe('ClearingHouse', function () {
     });
   });
   context('ClearingHouse: deployment', function () {
+    beforeEach(async function () {
+      this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
+      this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
+      this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
+    });
     it('transfers ownership to owner', async function () {
       expect(await this.clearingHouse.owner()).to.equal(owner);
     });
   });
   context('ClearingHouse: add/remove tokens ', function () {
+    beforeEach(async function () {
+      this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
+      this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
+      this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
+    });
     it('adds new supported tokens', async function () {
       expect(
         await this.clearingHouse.isSupportedToken(this.token1.address),
-        `Token1: ${this.token1.address} should not be supported`
+        `Token1: ${this.token1.address} should not be supported yet`
       ).to.be.false;
       await this.clearingHouse.addToken(this.token1.address, { from: owner });
       expect(
@@ -66,15 +76,28 @@ describe('ClearingHouse', function () {
         `Token1: ${this.token1.address} should be supported`
       ).to.be.true;
     });
-
-    it('remove supported tokens', async function () {});
+    it('removes supported tokens', async function () {
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      expect(
+        await this.clearingHouse.isSupportedToken(this.token1.address),
+        `Token1: ${this.token1.address} should be supported`
+      ).to.be.true;
+      await this.clearingHouse.removeToken(this.token1.address, { from: owner });
+      expect(
+        await this.clearingHouse.isSupportedToken(this.token1.address),
+        `Token1: ${this.token1.address} should not be supported`
+      ).to.be.false;
+    });
     it('reverts if addToken is not called by owner', async function () {
-      await expectRevert(this.token1.addToken(this.token1.address, { from: dev }), 'Ownable: caller is not the owner');
+      await expectRevert(
+        this.clearingHouse.addToken(this.token1.address, { from: dev }),
+        'Ownable: caller is not the owner'
+      );
     });
     it('reverts if removeToken is not called by owner', async function () {
-      await this.token1.addToken(this.token1.address, { from: owner });
+      await this.clearingHouse.addToken(this.token1.address, { from: owner });
       await expectRevert(
-        this.token1.removeToken(this.token1.address, { from: dev }),
+        this.clearingHouse.removeToken(this.token1.address, { from: dev }),
         'Ownable: caller is not the owner'
       );
     });
