@@ -1,0 +1,31 @@
+{
+  "name": "clearinghouse",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "AbsoluteVirtueXI <absolutevirtuexi@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "npx truffle compile && mocha --exit --recursive"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-environment": "^0.1.8",
+    "@openzeppelin/test-helpers": "^0.5.9",
+    "@truffle/hdwallet-provider": "^1.2.0",
+    "chai": "^4.2.0",
+    "eslint": "^7.15.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-mocha-no-only": "^1.1.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "mocha": "^8.2.1",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.2",
+    "solhint": "^3.3.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.3.0",
+    "dotenv": "^8.2.0"
+  }
+}
