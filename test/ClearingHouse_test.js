@@ -215,7 +215,7 @@ describe('ClearingHouse', function () {
         'ClearingHouse contract does not have right balance'
       ).to.be.a.bignumber.equal(ether('80'));
     });
-    it('reverts is nonce is invalid', async function () {
+    it('reverts if nonce is invalid', async function () {
       const hash = web3.utils.soliditySha3(this.token1.address, ether('40'), 0, user1);
       // Need fixSignature if we are testing on ganache
       const signature = fixSignature(await web3.eth.sign(hash, owner));
