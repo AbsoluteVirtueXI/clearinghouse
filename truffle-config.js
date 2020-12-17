@@ -52,6 +52,14 @@ module.exports = {
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
     },
+    mainnet: {
+      provider: function () {
+        return new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${projectId}`);
+      },
+      gas: 5000000,
+      gasPrice: 5e9,
+      network_id: 1,
+    },
     rinkeby: {
       provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${projectId}`),
       network_id: 4,
