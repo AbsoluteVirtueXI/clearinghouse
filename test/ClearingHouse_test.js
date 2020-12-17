@@ -22,46 +22,6 @@ function fixSignature(signature) {
   return signature.slice(0, 130) + vHex;
 }
 
-// signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
-async function signMessage(signer, messageHex = '0x') {
-  return fixSignature(await web3.eth.sign(messageHex, signer));
-}
-
-/**
- * Create a signer between a contract and a signer for a voucher of method, args, and redeemer
- * Note that `method` is the web3 method, not the truffle-contract method
- * @param contract TruffleContract
- * @param signer address
- * @param redeemer address
- * @param methodName string
- * @param methodArgs any[]
- */
-const getSignFor = (contract, signer) => (redeemer, methodName, methodArgs = []) => {
-  const parts = [contract.address, redeemer];
-
-  const REAL_SIGNATURE_SIZE = 2 * 65; // 65 bytes in hexadecimal string length
-  const PADDED_SIGNATURE_SIZE = 2 * 96; // 96 bytes in hexadecimal string length
-  const DUMMY_SIGNATURE = `0x${web3.utils.padLeft('', REAL_SIGNATURE_SIZE)}`;
-
-  // if we have a method, add it to the parts that we're signing
-  if (methodName) {
-    if (methodArgs.length > 0) {
-      parts.push(
-        contract.contract.methods[methodName](...methodArgs.concat([DUMMY_SIGNATURE]))
-          .encodeABI()
-          .slice(0, -1 * PADDED_SIGNATURE_SIZE)
-      );
-    } else {
-      const abi = contract.abi.find((abi) => abi.name === methodName);
-      parts.push(abi.signature);
-    }
-  }
-
-  // return the signature of the "Ethereum Signed Message" hash of the hash of `parts`
-  const messageHex = web3.utils.soliditySha3(...parts);
-  return signMessage(signer, messageHex);
-};
-
 const ClearingHouse = contract.fromArtifact('ClearingHouse');
 const Token1 = contract.fromArtifact('Token1');
 const Token2 = contract.fromArtifact('Token2');
@@ -214,7 +174,9 @@ describe('ClearingHouse', function () {
   });
   context('ClearingHouse: withdraw tokens', async function () {
     before(async function () {
-      this.nonce = 0;
+      this.nonceUser1 = 0;
+      this.nonceUser2 = 0;
+      this.nonceUser3 = 0;
       this.clearingHouse = await ClearingHouse.new(owner, { from: dev });
       this.token1 = await Token1.new('Token1', 'TK1', { from: token1Owner });
       this.token2 = await Token2.new('Token2', 'TK2', { from: token2Owner });
@@ -234,20 +196,33 @@ describe('ClearingHouse', function () {
       await this.token2.approve(this.clearingHouse.address, ether('100'), { from: user3 });
       // Owner approves Tokens in ClearingHouse
       await this.clearingHouse.addToken(this.token1.address, { from: owner });
+      await this.clearingHouse.addToken(this.token2.address, { from: owner });
       // Users deposit token into ClearingHouse
       await this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('50'), { from: user1 });
+      await this.clearingHouse.deposit(this.token1.address, RECEIVER, ether('70'), { from: user2 });
     });
     it('withdraws tokens', async function () {
-      this.nonce += 1;
-      const hash = web3.utils.soliditySha3(this.token1.address, ether('40'), this.nonce, user1);
+      this.nonceUser1 += 1;
+      const hash = web3.utils.soliditySha3(this.token1.address, ether('40'), this.nonceUser1, user1);
+      // Need fixSignature if we are testing on ganache
       const signature = fixSignature(await web3.eth.sign(hash, owner));
-      await this.clearingHouse.withdraw(this.token1.address, ether('40'), this.nonce, signature, { from: user1 });
-      expect(await this.token1.balanceOf(user1)).to.be.a.bignumber.equal(ether('90'));
+      await this.clearingHouse.withdraw(this.token1.address, ether('40'), this.nonceUser1, signature, { from: user1 });
+      expect(await this.token1.balanceOf(user1), 'user1 does not have right balance').to.be.a.bignumber.equal(
+        ether('90')
+      );
+      expect(
+        await this.token1.balanceOf(this.clearingHouse.address),
+        'ClearingHouse contract does not have right balance'
+      ).to.be.a.bignumber.equal(ether('80'));
     });
-    /*
     it('reverts is nonce is invalid', async function () {
-      await expectRevert(this.clearingHouse.withdraw());
+      const hash = web3.utils.soliditySha3(this.token1.address, ether('40'), 0, user1);
+      // Need fixSignature if we are testing on ganache
+      const signature = fixSignature(await web3.eth.sign(hash, owner));
+      await expectRevert(
+        this.clearingHouse.withdraw(this.token1.address, ether('40'), this.nonceUser1, signature, { from: user1 }),
+        'ClearingHouse: Invalid nonce'
+      );
     });
-    */
   });
 });

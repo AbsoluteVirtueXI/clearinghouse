@@ -13,7 +13,6 @@ contract ClearingHouse is Ownable {
     mapping(address => bool) private _supportedTokens;
     mapping(address => uint256) private _nonces;
 
-    // TESTED
     constructor(address owner) {
         transferOwnership(owner);
     }
@@ -28,7 +27,6 @@ contract ClearingHouse is Ownable {
         _;
     }
 
-    // TESTED
     function deposit(
         address token,
         string memory receiver,
@@ -53,19 +51,16 @@ contract ClearingHouse is Ownable {
         tokenERC.transfer(msg.sender, amount);
     }
 
-    // TESTED
     function addToken(address token) public onlyOwner {
         _supportedTokens[token] = true;
         emit TokenAdded(token);
     }
 
-    //TESTED
     function removeToken(address token) public onlyOwner {
         _supportedTokens[token] = false;
         emit TokenRemoved(token);
     }
 
-    //TEST
     function isSupportedToken(address token) public view returns (bool) {
         return _supportedTokens[token];
     }
